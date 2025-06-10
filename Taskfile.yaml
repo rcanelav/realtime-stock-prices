@@ -2,15 +2,60 @@ version: "3"
 
 env:
   LOCAL_URL: "http://localhost:8000/invoke"
+  TFVARS_FILE: "./infrastructure/terraform/variables.auto.tfvars"
 
 tasks:
   invoke-local:
     desc: Invoke the local server
     cmds:
-      - echo "Invoking local server at ${LOCAL_URL}"
-      - >
-        curl -X POST ${LOCAL_URL} 
-        -H "Content-Type: application/json" 
-        -d '{"query": "text"}'
+    - echo "Invoking local server at ${LOCAL_URL}"
+    - >
+      curl -X POST ${LOCAL_URL}  -H "Content-Type: application/json"  -d '{"query": "text"}'
 
+  create-oidc:
+    desc: Create OIDC role for GitHub Actions
+    cmds:
+    - echo "Creating OIDC role for GitHub Actions..."
+    - sh install.sh oidc
 
+  update-oidc:
+    desc: Update OIDC role for GitHub Actions
+    cmds:
+    - echo "Updating OIDC role for GitHub Actions..."
+    - sh install.sh oidc-update
+
+  backend-create:
+    desc: Create Terraform backend
+    cmds:
+    - echo "Creating Terraform backend..."
+    - sh install.sh create
+
+  backend-update:
+    desc: Update Terraform backend
+    cmds:
+    - echo "Updating Terraform backend..."
+    - sh install.sh update
+
+  backend-destroy:
+    desc: Destroy Terraform backend
+    cmds:
+    - echo "Destroying Terraform backend..."
+    - sh install.sh destroy
+
+  tf-init:
+    desc: Initialize Terraform
+    cmds:
+    - echo "Initializing Terraform..."
+    - terraform init
+
+  tfvars:
+    desc: Create Terraform variables file if it doesn't exist
+    cmds:
+    - |
+      if [ -f ${TFVARS_FILE} ]; then
+        echo "File ${TFVARS_FILE} already exists"
+      else
+        echo "AWS_BEDROCK_MODEL_ID = \"\"" > ${TFVARS_FILE}
+        echo "AWS_REGION           = \"\"" >> ${TFVARS_FILE}
+        echo "${TFVARS_FILE} created successfully"
+      fi
