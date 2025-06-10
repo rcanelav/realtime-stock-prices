@@ -10,3 +10,4 @@ wheels/
 .venv
 .devbox
 __pycache__
+.env
