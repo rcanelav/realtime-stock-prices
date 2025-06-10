@@ -1,0 +1,50 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Create required resources for storing Terraform state files.
+
+Parameters:
+  S3BucketName:
+    Type: String
+    Description: S3 Bucket name for Terraform state files.
+    Default: tf-state-backend-tech42
+
+  DynamoDBTableName:
+    Type: String
+    Description: DynamoDB table name for Terraform state locking.
+    Default: tf-state-lock
+
+Resources:
+  TerraformBackendBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Ref S3BucketName
+      VersioningConfiguration:
+        Status: Enabled
+
+  TerraformBackendDynamoDBTable:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      TableName: !Ref DynamoDBTableName
+      AttributeDefinitions:
+      - AttributeName: LockID
+        AttributeType: S
+      KeySchema:
+      - AttributeName: LockID
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      SSESpecification:
+        SSEEnabled: true
+
+Outputs:
+  TerraformBackendBucketName:
+    Description: "S3 bucket name for the Terraform backend."
+    Value: !Ref TerraformBackendBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-TerraformBackendBucketName"
+
+  TerraformBackendDynamoDBTableName:
+    Description: "DynamoDB table name for the Terraform backend."
+    Value: !Ref TerraformBackendDynamoDBTable
+    Export:
+      Name: !Sub "${AWS::StackName}-TerraformBackendDynamoDBTableName"
