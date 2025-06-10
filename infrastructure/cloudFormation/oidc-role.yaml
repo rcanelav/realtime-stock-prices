@@ -1,0 +1,48 @@
+Parameters:
+  Repos:
+    Description: A comma-separated list of GitHub repositories for which the OIDC provider is set up
+    Type: CommaDelimitedList
+
+Resources:
+  MyOIDCProvider:
+    Type: 'AWS::IAM::OIDCProvider'
+    Properties:
+      Url: 'https://token.actions.githubusercontent.com'
+      ClientIdList:
+      - sts.amazonaws.com
+      ThumbprintList:
+      - 6938fd4d98bab03faadb97b34396831e3780aea1
+      - 1c58a3a8518e8759bf075b76b750d4f2df264fcd
+
+  OIDCRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: 'OIDC-role'
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+        - Effect: Allow
+          Principal:
+            Federated: !Sub >-
+              arn:aws:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com
+          Action: 'sts:AssumeRoleWithWebIdentity'
+          Condition:
+            StringLike:
+              'token.actions.githubusercontent.com:sub': !Split
+                - ","
+                - !Join
+                  - ","
+                  - !Ref Repos
+            StringEquals:
+              'token.actions.githubusercontent.com:aud': sts.amazonaws.com
+      ManagedPolicyArns:
+      - 'arn:aws:iam::aws:policy/PowerUserAccess'
+
+Outputs:
+  RoleName:
+    Description: 'The name of the IAM role for GitHub Actions'
+    Value:
+      Ref: OIDCRole
+    Export:
+      Name:
+        Fn::Sub: '${AWS::StackName}-RoleName'
