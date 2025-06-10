@@ -3,7 +3,8 @@
     "packages": [
       "uv@latest",
       "go-task@latest",
-      "terraform@latest"
+      "terraform@latest",
+      "awscli@latest"
     ],
     "shell": {
       "init_hook": [
