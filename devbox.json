@@ -1,0 +1,23 @@
+{
+    "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.14.2/.schema/devbox.schema.json",
+    "packages": [
+      "uv@latest",
+      "go-task@latest"
+    ],
+    "shell": {
+      "init_hook": [
+          "if [ ! -d \".venv\" ]; then devbox run bootstrap; fi",
+          "if [ -d \".venv\" ]; then . .venv/bin/activate; fi"
+      ],
+      "scripts": {
+        "bootstrap": [
+          "uv python install",
+          "uv init"
+        ],
+        "test": [
+          "echo \"Error: no test specified\" && exit 1"
+        ]
+      }
+    }
+  }
+  
