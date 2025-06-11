@@ -1,0 +1,66 @@
+on:
+    workflow_call:
+        inputs:
+            environment:
+                description: environment to deploy to
+                required: true
+                type: string
+        outputs:
+            image_tag:
+                description: The generated image tag
+                value: ${{ jobs.generate-image-tags.outputs.IMAGE_TAG }}
+
+#Special permissions required for OIDC authentication
+permissions:
+    id-token: write
+    contents: read
+
+env:
+    AWS_REGION: ${{ vars.AWS_REGION}}
+    APP_NAME: ${{ vars.APP_NAME }}
+
+jobs:
+    generate-image-tags:
+        runs-on: ubuntu-latest
+        outputs:
+          IMAGE_TAG: ${{ steps.generate-image-tag.outputs.image_tag }}
+        steps:
+          - name: Checkout
+            uses: actions/checkout@v4
+
+          - name: Generate image tag
+            id: generate-image-tag
+            run: |
+                LAST_COMMIT_HASH=$(git log --no-merges -n 1 --pretty=format:"%h")
+                echo "Last non-merge commit hash: $LAST_COMMIT_HASH"
+
+                # Extract the branch name from GITHUB_REF
+                BRANCH_NAME=${GITHUB_REF#refs/heads/}
+                echo "Branch Name: $BRANCH_NAME"
+
+                echo "image_tag=$LAST_COMMIT_HASH-$BRANCH_NAME" >> $GITHUB_OUTPUT
+
+    build-images:
+        runs-on: ubuntu-latest
+        needs: [generate-image-tags]
+        permissions:
+            id-token: write
+            contents: read
+        steps:
+          - name: Configure AWS Credentials
+            uses: aws-actions/configure-aws-credentials@v2
+            with:
+                role-to-assume: ${{ secrets.OIDC_ROLE_ARN }}
+                aws-region: ${{ vars.AWS_REGION }}
+
+          - name: Checkout
+            uses: actions/checkout@v4
+
+          - name: Deploy to ECR
+            env:
+                IMAGE_TAG: ${{ needs.generate-image-tags.outputs.IMAGE_TAG }}
+            run: |
+                echo "Generating images..."
+                aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${{secrets.ECR_REPOSITORY}}
+                docker build -t ${{secrets.ECR_REPOSITORY}}:$IMAGE_TAG .
+                docker push ${{secrets.ECR_REPOSITORY}}:$IMAGE_TAG
