@@ -14,7 +14,7 @@ variable "AWS_REGION" {
 variable "APP_NAME" {
   description = "The name of the application"
   type        = string
-  default     = "finance-agent"
+  default     = "stock-prices-agent"
 }
 
 variable "CONTAINER_PORT" {
