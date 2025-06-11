@@ -37,6 +37,28 @@ Resources:
               'token.actions.githubusercontent.com:aud': sts.amazonaws.com
       ManagedPolicyArns:
       - 'arn:aws:iam::aws:policy/PowerUserAccess'
+      Policies:
+      - PolicyName: "AdditionalIAMPermissions"
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: Allow
+            Action:
+            - "iam:GetPolicy"
+            - "iam:GetPolicyVersion"
+            - "iam:ListPolicyVersions"
+            Resource:
+            - !Sub "arn:aws:iam::${AWS::AccountId}:policy/lambda-ecr-access-stock-prices-agent"
+          - Effect: Allow
+            Action:
+            - "iam:GetRole"
+            - "iam:ListRolePolicies"
+            - "iam:GetRolePolicy"
+            - "iam:ListAttachedRolePolicies"
+            - "iam:PassRole"
+            Resource:
+            - !Sub "arn:aws:iam::${AWS::AccountId}:role/lambda-operator-stock-prices-agent"
+            - !Sub "arn:aws:iam::${AWS::AccountId}:role/lambda-execution-role-stock-prices-agent"
 
 Outputs:
   RoleName:
