@@ -1,0 +1,36 @@
+on:
+    workflow_call:
+        inputs:
+            environment:
+                description: environment to deploy to
+                required: true
+                type: string
+            image_tag:
+                description: image tag to deploy
+                required: true
+                type: string
+
+#Special permissions required for OIDC authentication
+permissions:
+    id-token: write
+    contents: read
+
+env:
+    AWS_REGION: ${{ vars.AWS_REGION}}
+
+jobs:
+    update-lambda-image:
+        runs-on: ubuntu-latest
+        steps:
+          - name: Configure AWS Credentials
+            uses: aws-actions/configure-aws-credentials@v2
+            with:
+                role-to-assume: ${{ secrets.OIDC_ROLE_ARN }}
+                aws-region: ${{ vars.AWS_REGION }}
+
+          - name: Update AWS Lambda Function
+            env:
+              IMAGE_TAG: ${{ inputs.image_tag }}
+            run: |
+                  echo "Updating Lambda function..."
+                  aws lambda update-function-code --function-name ${{ vars.FUNCTION_ARN }} --image-uri ${{secrets.ECR_REPOSITORY}}:$IMAGE_TAG
