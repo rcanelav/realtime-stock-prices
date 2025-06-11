@@ -1,8 +1,13 @@
 version: "3"
 
 env:
-  LOCAL_URL: "http://localhost:8000/invoke"
+  LOCAL_URL: "http://localhost:8000/api/invoke"
+  REMOTE_URL: "https://vvpjwjbctmecg6gddg4o5e4jl40rldqq.lambda-url.eu-west-2.on.aws/api/invoke"
   TFVARS_FILE: "./infrastructure/terraform/variables.auto.tfvars"
+  ECR_REPOSITORY: "641811205781.dkr.ecr.eu-west-2.amazonaws.com"
+  ECR_IMAGE: "stock-prices-agent-ecr"
+  FUNCTION_ARN: "arn:aws:lambda:eu-west-2:641811205781:function:stock-prices-agent"
+  IMAGE_TAG: "latest2"
 
 tasks:
   # ##################### General purpose tasks ################################
@@ -12,6 +17,16 @@ tasks:
     - echo "Invoking local server at ${LOCAL_URL}"
     - >
       curl -X POST ${LOCAL_URL}  -H "Content-Type: application/json"  -d '{"query": "text"}'
+  invoke-remote:
+    desc: Invoke the remote server
+    cmds:
+    - echo "Invoking remote server at ${REMOTE_URL}"
+    - |
+      curl -X POST "${REMOTE_URL}" \
+        -H "Content-Type: application/vnd.awslambda.http-integration-response" \
+        -H "Lambda-Runtime-Function-Response-Mode: streaming" \
+        -H "Transfer-Encoding: chunked" \
+        -d '{"query": "text"}'
 
   # ################## Infrastructure configuration tasks ######################
   create-oidc:
@@ -86,3 +101,31 @@ tasks:
     cmds:
     - echo "Applying Terraform changes with auto-approve..."
     - cd infrastructure/terraform && terraform apply -auto-approve
+
+  # ########################## Docker tasks ##################################
+
+  db:
+    desc: Build Docker image
+    cmds:
+    - echo "Building Docker image..."
+    - docker build -t ${ECR_REPOSITORY}/${ECR_IMAGE}:${IMAGE_TAG} . --provenance=false
+
+  dr:
+    desc: Run Docker container
+    cmds:
+    - echo "Running Docker container..."
+    - docker run --rm -p 8000:8000 ${ECR_REPOSITORY}/${ECR_IMAGE}:${IMAGE_TAG}
+
+  dp:
+    desc: Push Docker image to ECR
+    cmds:
+    - echo "Pushing Docker image to ECR..."
+    - aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin ${ECR_REPOSITORY}
+    - docker push  ${ECR_REPOSITORY}/${ECR_IMAGE}:${IMAGE_TAG}
+
+  # ######################## Lambda tasks ##################################
+  lu:
+    desc: Update Lambda function
+    cmds:
+    - echo "Updating Lambda function..."
+    - aws lambda update-function-code --function-name ${FUNCTION_ARN} --image-uri ${ECR_REPOSITORY}/${ECR_IMAGE}:${IMAGE_TAG}
