@@ -1,0 +1,48 @@
+name: Deployment Workflow
+
+on:
+    push:
+        branches:
+            - 'main'
+    pull_request:
+        branches:
+            - '*'
+    workflow_dispatch:
+
+jobs:
+    # 1. Determines the environment based on the branch
+    # 2. Checks if the branch is deployable,
+    # 3. Sets the working directory for Terraform.
+    set_environment:
+        uses: ./.github/workflows/_set_env.yml
+        secrets: inherit
+        with:
+            branch_name: ${{ github.ref_name }}
+
+    # 4. Runs Terraform to plan and apply changes if necessary
+    terraform:
+        needs: [set_environment]
+        uses: ./.github/workflows/_terraform.yml
+        secrets: inherit
+        with:
+            environment: ${{ needs.set_environment.outputs.tf_env }}
+            working_directory: ${{ needs.set_environment.outputs.tf_dir }}
+            deploy:  ${{ fromJson(needs.set_environment.outputs.tf_deploy) }}
+
+    # 5. Builds Docker images and pushes them to ECR
+    deploy-images:
+        needs: [set_environment]
+        uses: ./.github/workflows/_deploy_images.yml
+        secrets: inherit
+        with:
+            environment: ${{ needs.set_environment.outputs.tf_env }}
+
+    # 6. Updates the Lambda function with the new image
+    update-lambda:
+        needs: [set_environment, deploy-images]
+        uses: ./.github/workflows/_update_lambda.yml
+        secrets: inherit
+        with:
+            environment: ${{ needs.set_environment.outputs.tf_env }}
+            image_tag: ${{ needs.deploy-images.outputs.image_tag }}
+
