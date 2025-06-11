@@ -5,6 +5,7 @@ env:
   TFVARS_FILE: "./infrastructure/terraform/variables.auto.tfvars"
 
 tasks:
+  # ##################### General purpose tasks ################################
   invoke-local:
     desc: Invoke the local server
     cmds:
@@ -12,6 +13,7 @@ tasks:
     - >
       curl -X POST ${LOCAL_URL}  -H "Content-Type: application/json"  -d '{"query": "text"}'
 
+  # ################## Infrastructure configuration tasks ######################
   create-oidc:
     desc: Create OIDC role for GitHub Actions
     cmds:
@@ -42,12 +44,7 @@ tasks:
     - echo "Destroying Terraform backend..."
     - sh install.sh destroy
 
-  tf-init:
-    desc: Initialize Terraform
-    cmds:
-    - echo "Initializing Terraform..."
-    - terraform init
-
+  # ########################## Terraform tasks ##################################
   tfvars:
     desc: Create Terraform variables file if it doesn't exist
     cmds:
@@ -59,3 +56,21 @@ tasks:
         echo "AWS_REGION           = \"\"" >> ${TFVARS_FILE}
         echo "${TFVARS_FILE} created successfully"
       fi
+
+  tff:
+    desc: Format Terraform files
+    cmds:
+    - echo "Formatting Terraform files..."
+    - cd infrastructure/terraform && terraform fmt -check -recursive
+
+  tfi:
+    desc: Initialize Terraform
+    cmds:
+    - echo "Initializing Terraform..."
+    - cd infrastructure/terraform && terraform init
+
+  tfp:
+    desc: Run Terraform plan
+    cmds:
+    - echo "Running Terraform plan..."
+    - cd infrastructure/terraform && terraform plan
