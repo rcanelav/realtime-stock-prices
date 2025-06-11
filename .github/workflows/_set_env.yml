@@ -1,0 +1,54 @@
+name: 'Set Environment'
+on:
+    workflow_call:
+      inputs:
+        branch_name:
+          required: true
+          type: string
+      outputs:
+        tf_env:
+          description: "Computed TF_ENV"
+          value: ${{ jobs.set-env.outputs.tf_env }}
+        tf_dir:
+          description: "Computed TF_DIR"
+          value: ${{ jobs.set-env.outputs.tf_dir }}
+        tf_deploy:
+          description: "Computed TF_DEPLOY"
+          value: ${{ jobs.deploy.outputs.tf_deploy }}
+
+jobs:
+  set-env:
+    runs-on: ubuntu-latest
+    outputs:
+      tf_env: ${{ steps.pick.outputs.tf_env }}
+      tf_dir: ${{ steps.pick.outputs.tf_dir }}
+    steps:
+      - id: pick
+        run: |
+          env="dev"
+
+          case "${{ inputs.branch_name }}" in
+          main) env="prod" ;;
+          test) env="test" ;;
+          dev ) env="dev"  ;;
+          # Add more branches as needed
+          esac
+
+          echo "tf_env=$env" >> $GITHUB_OUTPUT
+          echo "tf_dir=infrastructure/terraform" >> $GITHUB_OUTPUT
+
+  deploy:
+    needs: set-env
+    runs-on: ubuntu-latest
+    outputs:
+      tf_deploy: ${{ steps.deploy.outputs.tf_deploy}}
+    steps:
+      - id: deploy
+        run: |
+          tf_deploy="false"
+          case "${{ inputs.branch_name }}" in
+          main) tf_deploy="true" ;;
+          dev ) tf_deploy="true" ;;
+          # Add more branches as needed
+          esac
+          echo "tf_deploy=$tf_deploy" >> $GITHUB_OUTPUT
