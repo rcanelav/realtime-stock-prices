@@ -61,7 +61,7 @@ tasks:
     desc: Format Terraform files
     cmds:
     - echo "Formatting Terraform files..."
-    - cd infrastructure/terraform && terraform fmt -check -recursive
+    - cd infrastructure/terraform && terraform fmt -recursive && terraform fmt -check
 
   tfi:
     desc: Initialize Terraform
@@ -74,3 +74,15 @@ tasks:
     cmds:
     - echo "Running Terraform plan..."
     - cd infrastructure/terraform && terraform plan
+
+  tfa:
+    desc: Apply Terraform changes
+    cmds:
+    - echo "Applying Terraform changes..."
+    - cd infrastructure/terraform && terraform apply
+
+  tfa-:
+    desc: Apply Terraform changes with auto-approve
+    cmds:
+    - echo "Applying Terraform changes with auto-approve..."
+    - cd infrastructure/terraform && terraform apply -auto-approve
