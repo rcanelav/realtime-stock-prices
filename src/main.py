@@ -14,7 +14,7 @@ from langchain_core.messages import (AIMessage, BaseMessage, HumanMessage,
                                      ToolMessage)
 
 from src.models.models import AgentRequest
-from src.tools.agent import agent_app
+from src.agents.stock_agent import agent_app
 from src.utils.logging_config import setup_logging
 
 API_KEY_NAME = "X-API-KEY"
