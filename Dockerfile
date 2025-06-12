@@ -23,6 +23,7 @@ COPY ./src ./src
 ENV PYTHONPATH=/app
 
 ENV AWS_LWA_INVOKE_MODE=response_stream
+ENV AWS_LWA_HEALTHCHECK_PATH=/health
 
 EXPOSE 8080
 
