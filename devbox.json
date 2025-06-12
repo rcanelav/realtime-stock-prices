@@ -4,7 +4,7 @@
       "uv@latest",
       "go-task@latest",
       "terraform@latest",
-      "awscli@latest"
+      "awscli2@latest"
     ],
     "shell": {
       "init_hook": [
