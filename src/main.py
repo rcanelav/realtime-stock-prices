@@ -90,5 +90,54 @@ async def main(request: Request):
     return StreamingResponse(stream(), media_type="text/event-stream")
 
 
+@app.post("/api/stock-agent/invoke", dependencies=[Depends(get_api_key)])
+async def invoke(request: AgentRequest):
+    """
+    Receives a query and streams the agent's response.
+    The stream includes intermediate steps like tool calls and final output.
+    """
+    if not request.query:
+        raise HTTPException(status_code=400, detail="Query is required")
+
+    logger.info("📥 Received query", query=request.query)
+
+    initial_state = {"messages": [HumanMessage(content=request.query)]}
+
+    async def stream_response() -> AsyncGenerator[str, None]:
+        loop = asyncio.get_event_loop()
+
+        def sync_stream():
+            for step in agent_app.stream(initial_state):
+                # Handle both tool and model messages
+                messages = (
+                    step.get("reasoner", {}).get("messages", [])
+                    or step.get("messages", [])
+                )
+                for msg in messages:
+                    if isinstance(msg, ToolMessage):
+                        yield f"[Tool Response] {msg.content}\n"
+                    elif isinstance(msg, AIMessage):
+                        if msg.content:
+                            yield f"[AI] {msg.content}\n"
+                        elif msg.tool_calls:
+                            for tool_call in msg.tool_calls:
+                                tool_name = tool_call.get("name")
+                                tool_input = tool_call.get("input")
+                                yield f"[Tool Call] {tool_name} with input {tool_input}\n"
+                    elif isinstance(msg, BaseMessage) and getattr(msg, "content", None):
+                        yield f"{msg.content}\n"
+
+        # Run sync generator in executor, then yield each part
+        for chunk in await loop.run_in_executor(None, sync_stream):
+            yield chunk
+            await asyncio.sleep(0.05)
+
+    return StreamingResponse(stream_response(), media_type="text/event-stream")
+
+
+@app.get("/health")
+async def healtcheck():
+    return {"status": "ok"}
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8080)
