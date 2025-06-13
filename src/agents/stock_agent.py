@@ -19,19 +19,32 @@ tools = [
 
 tool_node = ToolNode(tools)
 
-# LLM Configuration
-model = ChatBedrockConverse(model=os.getenv(
-    "AWS_BEDROCK_MODEL_ID", "anthropic.claude-3-haiku-20240307-v1:0"),
-).bind_tools(tools)
 
 # System prompt for the agent
 system_message = SystemMessage(
     content="""
-        You are a financial agent that can answer questions about stock prices.
-        You have access to tools for real-time prices, historical prices, and current datetime.
-        "If a user asks about relative time ranges like 'Q4 last year', 'last week', or 'today',
-        "use the current datetime tool first to determine the correct date range before retrieving stock data."""
+        You are a financial assistant specialized in stock market data.
+
+        You can answer questions related to:
+        - Real-time stock prices
+        - Historical stock prices
+        - Current date and time
+
+        You have access to the following tools:
+        1. A tool to retrieve real-time stock prices for specific tickers.
+        2. A tool to retrieve historical stock data for specified date ranges.
+        3. A tool to get the current date and time.
+
+        **Behavior Guidelines:**
+        - If the user's query involves relative time expressions (e.g., “Q4 last year”, “last week”, “today”), always call the current datetime tool first to resolve the exact date range.
+        - When retrieving data, ensure your response is clear, concise, and formatted in tables when appropriate.
+        - If the question is unrelated to stock prices or market data, respond politely and decline to answer."""
 )
+
+# LLM Configuration
+model = ChatBedrockConverse(model=os.getenv(
+    "AWS_BEDROCK_MODEL_ID", "anthropic.claude-3-haiku-20240307-v1:0"),
+).bind_tools(tools)
 
 
 def reasoner(state: MessagesState):
