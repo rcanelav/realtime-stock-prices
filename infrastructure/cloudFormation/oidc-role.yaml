@@ -51,6 +51,14 @@ Resources:
             - "iam:PassRole"
             Resource:
             - !Sub "arn:aws:iam::${AWS::AccountId}:role/lambda-operator-stock-prices-agent"
+          - Effect: Allow
+            Action:
+            - "iam:GetPolicy"
+            - "iam:GetPolicyVersion"
+            - "iam:ListPolicyVersions"
+            Resource:
+            - !Sub "arn:aws:iam::${AWS::AccountId}:policy/AllowBedrockInvokeModel"
+            - !Sub "arn:aws:iam::${AWS::AccountId}:policy/lambda-ecr-access-stock-prices-agent"
 
 Outputs:
   RoleName:
