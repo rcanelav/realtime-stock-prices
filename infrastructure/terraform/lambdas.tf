@@ -5,7 +5,8 @@ module "function" {
   source              = "./modules/aws_lambda"
   name                = var.APP_NAME
   ecr_repo            = module.ecr.repository_url
-  timeout             = 120
+  timeout             = 300
+  memory_size         = 512
   create_function_url = true
   invoke_mode         = "RESPONSE_STREAM"
 
