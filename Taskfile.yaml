@@ -37,7 +37,7 @@ tasks:
         -H "Lambda-Runtime-Function-Response-Mode: streaming" \
         -H "Transfer-Encoding: chunked" \
         -H "X-API-KEY: sk-1a2b3c4d5e6f7g8h9i0j" \
-        -d '{"query": "What were the stock prices for Amazon in Q4 last year?"}'
+        -d '{"query": "What is the stock price for Amazon right now?"}'
 
   ir2:
     desc: Invoke the local server with a query
@@ -47,7 +47,7 @@ tasks:
       curl -N -X POST "${REMOTE_URL}" \
         -H "Content-Type: application/json" \
         -H "X-API-KEY: sk-1a2b3c4d5e6f7g8h9i0j" \
-        -d '{"query": "What were the stock prices for Amazon in Q4 last year? Can you provide a detailed analysis?"}'
+        -d '{"query": "What were the stock prices for Amazon in Q4 last year?"}'
 
   # ################## Infrastructure configuration tasks ######################
   create-oidc:
