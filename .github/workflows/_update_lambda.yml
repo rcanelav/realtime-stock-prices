@@ -22,15 +22,42 @@ jobs:
     update-lambda-image:
         runs-on: ubuntu-latest
         steps:
-          - name: Configure AWS Credentials
-            uses: aws-actions/configure-aws-credentials@v2
-            with:
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v2
+              with:
                 role-to-assume: ${{ secrets.OIDC_ROLE_ARN }}
                 aws-region: ${{ vars.AWS_REGION }}
 
-          - name: Update AWS Lambda Function
-            env:
-              IMAGE_TAG: ${{ inputs.image_tag }}
-            run: |
-                  echo "Updating Lambda function..."
-                  aws lambda update-function-code --function-name ${{ vars.FUNCTION_ARN }} --image-uri ${{secrets.ECR_REPOSITORY}}:$IMAGE_TAG
+            - name: Update Lambda image
+              env:
+                IMAGE_TAG: ${{ inputs.image_tag }}
+              run: |
+                echo "Updating Lambda image..."
+                aws lambda update-function-code \
+                  --function-name ${{ vars.FUNCTION_ARN }} \
+                  --image-uri ${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG
+
+            - name: Fetch SERVICE_API_KEY from SSM
+              id: fetch_ssm
+              run: |
+                echo "Fetching SERVICE_API_KEY from SSM..."
+                VALUE=$(aws ssm get-parameter \
+                  --name "/stock-agent/SERVICE_API_KEY" \
+                  --with-decryption \
+                  --query "Parameter.Value" \
+                  --output text)
+                echo "SERVICE_API_KEY=$VALUE" >> $GITHUB_ENV
+
+            - name: Merge and update Lambda environment variables
+              run: |
+                echo "Updating Lambda environment variables..."
+                CURRENT_ENV=$(aws lambda get-function-configuration \
+                  --function-name ${{ vars.FUNCTION_ARN }} \
+                  --query "Environment.Variables" \
+                  --output json)
+
+                UPDATED_ENV=$(echo "$CURRENT_ENV" | jq --arg SERVICE_API_KEY "$SERVICE_API_KEY" '. + {SERVICE_API_KEY: $SERVICE_API_KEY}')
+
+                aws lambda update-function-configuration \
+                  --function-name ${{ vars.FUNCTION_ARN }} \
+                  --environment "Variables=$UPDATED_ENV"
