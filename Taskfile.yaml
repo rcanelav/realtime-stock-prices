@@ -1,36 +1,53 @@
 version: "3"
 
 env:
-  LOCAL_URL: "http://localhost:8080/api/invoke"
-  REMOTE_URL: "https://vvpjwjbctmecg6gddg4o5e4jl40rldqq.lambda-url.eu-west-2.on.aws/api/invoke"
+  LOCAL_URL: "http://localhost:8080/api/stock-agent/invoke"
+  REMOTE_URL: "https://vvpjwjbctmecg6gddg4o5e4jl40rldqq.lambda-url.eu-west-2.on.aws/api/stock-agent/invoke"
   TFVARS_FILE: "./infrastructure/terraform/variables.auto.tfvars"
   ECR_REPOSITORY: "641811205781.dkr.ecr.eu-west-2.amazonaws.com"
   ECR_IMAGE: "stock-prices-agent-ecr"
   FUNCTION_ARN: "arn:aws:lambda:eu-west-2:641811205781:function:stock-prices-agent"
-  IMAGE_TAG: "latest2"
+  IMAGE_TAG: "latest3"
 
 tasks:
   # ##################### General purpose tasks ################################
-  invoke-local:
+  r:
+    desc: Run the application
+    cmds:
+    - echo "Running the application..."
+    - uvicorn src.main:app --port 8080 --reload | jq
+
+  il:
     desc: Invoke the local server
     cmds:
     - echo "Invoking local server at ${LOCAL_URL}"
     - >
       curl -X POST ${LOCAL_URL} \
-        -H "Content-Type: application/vnd.awslambda.http-integration-response" \
-        -H "Lambda-Runtime-Function-Response-Mode: streaming" \
+        -H "Content-Type: application/json" \
         -H "Transfer-Encoding: chunked" \
-        -d '{"query": "text"}'
-  invoke-remote:
+        -H "X-API-KEY: sk-1a2b3c4d5e6f7g8h9i0j" \
+        -d '{"query": "What were the stock prices for Amazon in Q4 last year?"}'
+  ir1:
     desc: Invoke the remote server
     cmds:
     - echo "Invoking remote server at ${REMOTE_URL}"
     - |
       curl -X POST "${REMOTE_URL}" \
-        -H "Content-Type: application/vnd.awslambda.http-integration-response" \
+        -H "Content-Type: application/json" \
         -H "Lambda-Runtime-Function-Response-Mode: streaming" \
         -H "Transfer-Encoding: chunked" \
-        -d '{"query": "text"}'
+        -H "X-API-KEY: sk-1a2b3c4d5e6f7g8h9i0j" \
+        -d '{"query": "What were the stock prices for Amazon in Q4 last year?"}'
+
+  ir2:
+    desc: Invoke the local server with a query
+    cmds:
+    - echo "Invoking local server with query"
+    - |
+      curl -N -X POST "${REMOTE_URL}" \
+        -H "Content-Type: application/json" \
+        -H "X-API-KEY: sk-1a2b3c4d5e6f7g8h9i0j" \
+        -d '{"query": "What were the stock prices for Amazon in Q4 last year? Can you provide a detailed analysis?"}'
 
   # ################## Infrastructure configuration tasks ######################
   create-oidc:
