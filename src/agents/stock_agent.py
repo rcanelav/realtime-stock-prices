@@ -42,14 +42,26 @@ system_message = SystemMessage(
 )
 
 # LLM Configuration
-model = ChatBedrockConverse(model=os.getenv(
-    "AWS_BEDROCK_MODEL_ID", "anthropic.claude-3-haiku-20240307-v1:0"),
+model = ChatBedrockConverse(
+    model=os.getenv(
+        "AWS_BEDROCK_MODEL_ID", "anthropic.claude-3-haiku-20240307-v1:0")
 ).bind_tools(tools)
+
+MAX_MESSAGES = 10
 
 
 def reasoner(state: MessagesState):
+    messages = state['messages']
+
+    # Deduplicate system prompt
+    if not any(isinstance(m, SystemMessage) for m in messages):
+        messages = [system_message] + messages
+
+    # Truncate to avoid token explosion
+    messages = messages[-MAX_MESSAGES:]
+
     return {
-        "messages": [model.invoke([system_message] + state['messages'])],
+        "messages": [model.invoke(messages)],
     }
 
 
