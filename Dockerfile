@@ -27,4 +27,4 @@ ENV AWS_LWA_HEALTHCHECK_PATH=/health
 
 EXPOSE 8080
 
-CMD ["python", "src/main.py"]
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8080"]
