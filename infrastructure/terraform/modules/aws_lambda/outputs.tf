@@ -21,3 +21,8 @@ output "lambda_function_url" {
   value       = var.create_function_url ? aws_lambda_function_url.this[0].function_url : null
 }
 
+output "iam_role_name" {
+  description = "The name of the IAM role associated with the Lambda function"
+  value       = aws_iam_role.this.name
+}
+

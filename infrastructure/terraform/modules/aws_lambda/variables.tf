@@ -46,3 +46,9 @@ variable "invoke_mode" {
   type        = string
   default     = "BUFFERED"
 }
+
+variable "memory_size" {
+  description = "The amount of memory available to the Lambda function in MB"
+  type        = number
+  default     = 128
+}

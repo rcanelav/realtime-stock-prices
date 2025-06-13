@@ -58,6 +58,8 @@ resource "aws_lambda_function" "this" {
   timeout       = var.timeout
   package_type  = "Image"
 
+  memory_size = var.memory_size
+
   lifecycle {
     ignore_changes = [
       image_uri,
