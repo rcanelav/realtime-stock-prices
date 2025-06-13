@@ -1,4 +1,4 @@
-from langchain_core.messages import AIMessage, ToolMessage, BaseMessage
+from langchain_core.messages import AIMessage, BaseMessage, ToolMessage
 
 
 def parse_agent_step(step) -> list[str]:
@@ -9,16 +9,27 @@ def parse_agent_step(step) -> list[str]:
 
     chunks = []
     for msg in messages:
+        content = msg.content
+
         if isinstance(msg, ToolMessage):
-            chunks.append(f"[Tool Response] {msg.content}\n")
+            chunks.append(f"[Tool Response] {content}\n")
         elif isinstance(msg, AIMessage):
-            if msg.content:
-                chunks.append(f"[AI] {msg.content}\n")
+            # Normalize content to string
+            if isinstance(content, list):
+                content = "".join(str(part)
+                                  for part in content if isinstance(part, str))
+
+            if content:
+                for line in content.splitlines():
+                    chunks.append(f"[AI] {line}\n")
             elif msg.tool_calls:
                 for call in msg.tool_calls:
                     chunks.append(
                         f"[Tool Call] {call.get('name')} with input {call.get('input')}\n")
-        elif isinstance(msg, BaseMessage) and getattr(msg, "content", None):
-            chunks.append(f"{msg.content}\n")
+        elif isinstance(msg, BaseMessage) and content:
+            if isinstance(content, list):
+                content = "".join(str(part)
+                                  for part in content if isinstance(part, str))
+            chunks.append(f"{content}\n")
 
     return chunks
