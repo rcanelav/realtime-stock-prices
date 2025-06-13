@@ -28,15 +28,6 @@ jobs:
                 role-to-assume: ${{ secrets.OIDC_ROLE_ARN }}
                 aws-region: ${{ vars.AWS_REGION }}
 
-            - name: Update Lambda image
-              env:
-                IMAGE_TAG: ${{ inputs.image_tag }}
-              run: |
-                echo "Updating Lambda image..."
-                aws lambda update-function-code \
-                  --function-name ${{ vars.FUNCTION_ARN }} \
-                  --image-uri ${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG
-
             - name: Fetch SERVICE_API_KEY from SSM
               id: fetch_ssm
               run: |
@@ -50,14 +41,36 @@ jobs:
 
             - name: Merge and update Lambda environment variables
               run: |
-                echo "Updating Lambda environment variables..."
-                CURRENT_ENV=$(aws lambda get-function-configuration \
-                  --function-name ${{ vars.FUNCTION_ARN }} \
-                  --query "Environment.Variables" \
-                  --output json)
+                  echo "Updating Lambda environment variables..."
 
-                UPDATED_ENV=$(echo "$CURRENT_ENV" | jq --arg SERVICE_API_KEY "$SERVICE_API_KEY" '. + {SERVICE_API_KEY: $SERVICE_API_KEY}')
+                  CURRENT_ENV=$(aws lambda get-function-configuration \
+                    --function-name ${{ vars.FUNCTION_ARN }} \
+                    --query "Environment.Variables" \
+                    --output json)
 
-                aws lambda update-function-configuration \
-                  --function-name ${{ vars.FUNCTION_ARN }} \
-                  --environment "Variables=$UPDATED_ENV"
+                  SERVICE_API_KEY="${{ env.SERVICE_API_KEY }}"
+
+                  UPDATED_ENV=$(echo "$CURRENT_ENV" | jq -c --arg SERVICE_API_KEY "$SERVICE_API_KEY" '. + {SERVICE_API_KEY: $SERVICE_API_KEY}')
+
+                  echo "Final updated env: $UPDATED_ENV"
+
+                  aws lambda update-function-configuration \
+                    --function-name ${{ vars.FUNCTION_ARN }} \
+                    --environment "{\"Variables\":$UPDATED_ENV}"
+
+                  echo "Waiting for config update to finish..."
+                  for i in {1..10}; do
+                    STATUS=$(aws lambda get-function-configuration --function-name ${{ vars.FUNCTION_ARN }} --query "LastUpdateStatus" --output text)
+                    echo "Status: $STATUS"
+                    [ "$STATUS" == "Successful" ] && break
+                    sleep 5
+                  done
+
+            - name: Update Lambda image
+              env:
+                IMAGE_TAG: ${{ inputs.image_tag }}
+              run: |
+                    echo "Updating Lambda image..."
+                    aws lambda update-function-code \
+                    --function-name ${{ vars.FUNCTION_ARN }} \
+                    --image-uri ${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG
