@@ -22,10 +22,19 @@ def retrieve_realtime_stock_price(ticker: str) -> str:
     Retrieves the most recent stock price for a given ticker.
     """
     try:
+        if not isinstance(ticker, str) or not ticker.strip():
+            return "Invalid input: ticker must be a non-empty string."
+
+        ticker = ticker.strip().upper()
         stock = yf.Ticker(ticker)
         data = stock.history(period="1d", interval="1m")
-        if data.empty:
-            return f"Could not find real-time price for {ticker}. The ticker may be invalid or delisted."
+
+        if data is None or data.empty:
+            return f"No real-time data found for ticker '{ticker}'. It may be invalid or delisted."
+
+        if 'Close' not in data.columns or data['Close'].isna().all():
+            return f"Price data for '{ticker}' is unavailable or incomplete."
+
         price = data['Close'].iloc[-1]
         return f"The latest price for {ticker} is ${price:.2f}."
     except Exception as e:
