@@ -73,13 +73,11 @@ async def run_stock_agent(query: str) -> AsyncGenerator[str, None]:
         AsyncGenerator[str, None]: A generator that yields strings as the agent processes the query.
 
     """
-    initial_state = {"messages": [HumanMessage(content=query)]}
     loop = asyncio.get_event_loop()
-    agent = StockAgent()
 
     def sync_generator():
-        for step in agent.graph_app.stream(initial_state):
-            yield from parse_agent_step(step)
+        for step in get_agent_stream(query):
+            yield from parse_agent_step(step, AgentDisplayConfig().from_env())
 
     gen = sync_generator()
 
