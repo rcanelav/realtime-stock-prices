@@ -41,6 +41,33 @@ class EmptyInput(BaseModel):
 
 
 class AgentState(TypedDict):
+    """
+    Represents the evolving state of the agent throughout a LangGraph workflow.
+
+    This state is passed between nodes in the graph and accumulates messages over time,
+    such as user inputs, system prompts, tool calls, and AI responses.
+
+    Attributes:
+        messages (list[AnyMessage]):
+            A list of message objects exchanged during the agent's reasoning process.
+            This includes all interaction types (e.g., HumanMessage, AIMessage, ToolMessage).
+
+            The Annotated operator (operator.add) tells LangGraph how to merge state across steps.
+            In this case, new messages are appended to the existing list using the '+' operator.
+
+    Example:
+        {
+            "messages": [
+                HumanMessage(content="What's the weather today?"),
+                AIMessage(content="Let me check..."),
+                ToolMessage(content="72°F and sunny")
+            ]
+        }
+
+    Note:
+        This model is used as the state definition in StateGraph(...), and is essential for
+        enabling message accumulation and loop-based workflows in LangGraph.
+    """
     messages: Annotated[list[AnyMessage], operator.add]
 
 
