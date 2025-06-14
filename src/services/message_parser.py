@@ -28,16 +28,16 @@ def _format_msg(msg, prefix: str) -> list[str]:
         chunks.append(f"{prefix} [Tool Response] {content}\n")
 
     elif isinstance(msg, AIMessage):
+        if content:
+            for line in content.splitlines():
+                chunks.append(f"{prefix} [AI] {line}\n")
+
         if msg.tool_calls:
             for call in msg.tool_calls:
                 name = call.get("name")
                 input_str = json.dumps(call.get("input"), indent=2)
                 chunks.append(
                     f"{prefix} [Tool Call] {name} with input {input_str}\n")
-
-        if content:
-            for line in content.splitlines():
-                chunks.append(f"{prefix} [AI] {line}\n")
 
     elif isinstance(msg, BaseMessage) and content:
         chunks.append(f"{prefix} {content}\n")
