@@ -14,7 +14,7 @@ from src.tools.tools import (get_current_datetime,
                              retrieve_realtime_stock_price)
 
 
-def get_agent_stream(query: str) -> Iterator[dict[str, Any] | Any]:
+def get_stock_agent_stream(query: str) -> Iterator[dict[str, Any] | Any]:
     """
     Initializes and runs a streaming agent session based on the user's query.
 
@@ -63,20 +63,24 @@ def get_agent_stream(query: str) -> Iterator[dict[str, Any] | Any]:
     return agent.graph_app.stream(initial_state)
 
 
-async def run_stock_agent(query: str) -> AsyncGenerator[str, None]:
-    """Run the stock agent with the provided query.
+async def generate_agent_output(query: str) -> AsyncGenerator[str, None]:
+    """
+    Asynchronously streams parsed agent responses for a given query.
+
+    This function runs the agent in a background thread, parses each reasoning step,
+    and yields formatted message chunks suitable for real-time display.
 
     Args:
-        query (str): The query to be processed by the agent.
+        query (str): The user's natural language query.
 
     Yields:
-        AsyncGenerator[str, None]: A generator that yields strings as the agent processes the query.
-
+        str: Formatted text output from each agent step, streamed incrementally.
     """
+
     loop = asyncio.get_event_loop()
 
     def sync_generator():
-        for step in get_agent_stream(query):
+        for step in get_stock_agent_stream(query):
             yield from parse_agent_step(step, AgentDisplayConfig().from_env())
 
     gen = sync_generator()
