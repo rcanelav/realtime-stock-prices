@@ -1,14 +1,15 @@
 from datetime import datetime
+from typing import Optional
 
 import yfinance as yf
 
-from src.models.models import EmptyInput
+from src.models.models import EmptyInput, TickerInput
 
 
 # ########################################################################
 #                           Tool Definitions
 # ########################################################################
-def get_current_datetime(_: EmptyInput = None) -> str:
+def get_current_datetime(_: Optional[EmptyInput] = None) -> str:
     """
     Returns the current date and time in a human-readable format.
     """
@@ -16,7 +17,7 @@ def get_current_datetime(_: EmptyInput = None) -> str:
     return now.strftime("Today is %A, %B %d, %Y and the time is %H:%M:%S")
 
 
-def retrieve_realtime_stock_price(ticker: str) -> str:
+def retrieve_realtime_stock_price(ticker: TickerInput) -> str:
     """
     Retrieves the most recent stock price for a given ticker.
     """
@@ -37,10 +38,17 @@ def retrieve_historical_stock_price(ticker: str, start_date: str, end_date: str)
     """
     try:
         data = yf.download(ticker, start=start_date, end=end_date)
-        if data.empty:
+        if data is None or data.empty:
             return f"No historical data found for {ticker} between {start_date} and {end_date}."
+
         data.reset_index(inplace=True)
-        data['Date'] = data['Date'].dt.strftime('%Y-%m-%d')
-        return f"Historical data for {ticker}:\n{data[['Date', 'Open', 'High', 'Low', 'Close', 'Volume']].to_string(index=False)}"
+
+        if 'Date' in data.columns:
+            data['Date'] = data['Date'].dt.strftime('%Y-%m-%d')
+
+        # Relevant columns for output
+        output_table = data[['Date', 'Open', 'High', 'Low', 'Close', 'Volume']].to_string(index=False)
+
+        return f"Historical data for {ticker}:\n{output_table}"
     except Exception as e:
         return f"An error occurred while fetching historical data for {ticker}: {e}"
