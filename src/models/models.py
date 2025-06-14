@@ -12,6 +12,21 @@ from pydantic import BaseModel, Field
 
 
 class AgentRequest(BaseModel):
+    """
+    Request model for interacting with the agent via FastAPI.
+
+    This model represents the expected payload structure when a client sends a query
+    to the agent endpoint.
+
+    Attributes:
+        query (str): The natural language question or instruction provided by the user.
+                     This string will be processed by the agent to generate a response.
+
+    Example request body:
+        {
+            "query": "What is the current stock price of Tesla?"
+        }
+    """
     query: str
 
 
