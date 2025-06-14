@@ -3,7 +3,7 @@ from typing import Optional
 
 import yfinance as yf
 
-from src.models.models import EmptyInput, TickerInput
+from src.models.models import EmptyInput
 
 
 # ########################################################################
@@ -17,7 +17,7 @@ def get_current_datetime(_: Optional[EmptyInput] = None) -> str:
     return now.strftime("Today is %A, %B %d, %Y and the time is %H:%M:%S")
 
 
-def retrieve_realtime_stock_price(ticker: TickerInput) -> str:
+def retrieve_realtime_stock_price(ticker: str) -> str:
     """
     Retrieves the most recent stock price for a given ticker.
     """
