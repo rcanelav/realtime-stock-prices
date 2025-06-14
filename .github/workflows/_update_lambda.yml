@@ -28,43 +28,72 @@ jobs:
                 role-to-assume: ${{ secrets.OIDC_ROLE_ARN }}
                 aws-region: ${{ vars.AWS_REGION }}
 
-            - name: Fetch SERVICE_API_KEY from SSM
-              id: fetch_ssm
+            - name: Fetch all /stock-agent/ params from SSM
+              id: fetch_ssm_params
               run: |
-                echo "Fetching SERVICE_API_KEY from SSM..."
-                VALUE=$(aws ssm get-parameter \
-                  --name "/stock-agent/SERVICE_API_KEY" \
+                echo "Fetching all /stock-agent/ parameters..."
+                PARAMS=$(aws ssm get-parameters-by-path \
+                  --path "/stock-agent/" \
                   --with-decryption \
-                  --query "Parameter.Value" \
-                  --output text)
-                echo "SERVICE_API_KEY=$VALUE" >> $GITHUB_ENV
+                  --recursive \
+                  --query "Parameters[*]" \
+                  --output json)
 
-            - name: Merge and update Lambda environment variables
+                echo "$PARAMS" > params.json
+
+                # Build a JSON object of env vars: {KEY1: VALUE1, ...}
+                ENV_VARS=$(jq '
+                reduce .[] as $param ({};
+                  . + {
+                    ($param.Name | sub("^/stock-agent/"; "")) : $param.Value
+                  }
+                )
+                ' params.json)
+
+                echo "Collected environment variables:"
+                echo "$ENV_VARS" > new_env.json
+
+            - name: Merge with existing Lambda environment
               run: |
-                  echo "Updating Lambda environment variables..."
+                echo "Merging with current Lambda environment..."
 
-                  CURRENT_ENV=$(aws lambda get-function-configuration \
+                CURRENT_ENV_RAW=$(aws lambda get-function-configuration \
+                  --function-name ${{ vars.FUNCTION_ARN }} \
+                  --query "Environment.Variables" \
+                  --output json)
+
+                CURRENT_ENV=$(echo "$CURRENT_ENV_RAW" | jq 'if type == "object" then . else {} end')
+
+                ENV_VARS=$(jq '
+                  reduce .[] as $param ({};
+                    . + {
+                      ($param.Name | sub("^/stock-agent/"; "")) : $param.Value
+                    }
+                  )
+                ' params.json)
+
+                echo "$ENV_VARS" > new_env.json
+
+                UPDATED_ENV=$(jq -s '.[0] * .[1]' <(echo "$CURRENT_ENV") new_env.json)
+
+                echo "Merged env."
+                rm params.json new_env.json
+
+                aws lambda update-function-configuration \
+                  --function-name ${{ vars.FUNCTION_ARN }} \
+                  --environment "{\"Variables\":$UPDATED_ENV}"
+
+            - name: Wait for update to finish
+              run: |
+                for i in {1..10}; do
+                  STATUS=$(aws lambda get-function-configuration \
                     --function-name ${{ vars.FUNCTION_ARN }} \
-                    --query "Environment.Variables" \
-                    --output json)
-
-                  SERVICE_API_KEY="${{ env.SERVICE_API_KEY }}"
-
-                  UPDATED_ENV=$(echo "$CURRENT_ENV" | jq -c --arg SERVICE_API_KEY "$SERVICE_API_KEY" '. + {SERVICE_API_KEY: $SERVICE_API_KEY}')
-
-                  echo "Final updated env: $UPDATED_ENV"
-
-                  aws lambda update-function-configuration \
-                    --function-name ${{ vars.FUNCTION_ARN }} \
-                    --environment "{\"Variables\":$UPDATED_ENV}"
-
-                  echo "Waiting for config update to finish..."
-                  for i in {1..10}; do
-                    STATUS=$(aws lambda get-function-configuration --function-name ${{ vars.FUNCTION_ARN }} --query "LastUpdateStatus" --output text)
-                    echo "Status: $STATUS"
-                    [ "$STATUS" == "Successful" ] && break
-                    sleep 5
-                  done
+                    --query "LastUpdateStatus" \
+                    --output text)
+                  echo "Status: $STATUS"
+                  [ "$STATUS" == "Successful" ] && break
+                  sleep 5
+                done
 
             - name: Update Lambda image
               env:
