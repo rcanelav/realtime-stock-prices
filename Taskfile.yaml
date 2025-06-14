@@ -17,7 +17,18 @@ tasks:
     - echo "Running the application..."
     - uvicorn src.main:app --port 8080 --reload | jq
 
-  il:
+  il1:
+    desc: Invoke the local server
+    cmds:
+    - echo "Invoking local server at ${LOCAL_URL}"
+    - >
+      curl -X POST ${LOCAL_URL} \
+        -H "Content-Type: application/json" \
+        -H "Transfer-Encoding: chunked" \
+        -H "X-API-KEY: sk-1a2b3c4d5e6f7g8h9i0j" \
+        -d '{"query": "What is the stock price for Amazon right now?"}'
+
+  il2:
     desc: Invoke the local server
     cmds:
     - echo "Invoking local server at ${LOCAL_URL}"
