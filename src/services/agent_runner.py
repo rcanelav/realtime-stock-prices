@@ -3,7 +3,7 @@ from typing import AsyncGenerator
 
 from langchain_core.messages import HumanMessage
 
-from src.agents.stock_agent import agent_app
+from src.agents.stock_agent import StockAgent
 from src.services.message_parser import parse_agent_step
 
 
@@ -19,9 +19,10 @@ async def run_stock_agent(query: str) -> AsyncGenerator[str, None]:
     """
     initial_state = {"messages": [HumanMessage(content=query)]}
     loop = asyncio.get_event_loop()
+    agent = StockAgent()
 
     def sync_generator():
-        for step in agent_app.stream(initial_state):
+        for step in agent.graph_app.stream(initial_state):
             yield from parse_agent_step(step)
 
     gen = sync_generator()
