@@ -1,35 +1,45 @@
 from langchain_core.messages import AIMessage, BaseMessage, ToolMessage
+import json
 
 
-def parse_agent_step(step) -> list[str]:
-    messages = (
-        step.get("reasoner", {}).get("messages", []) or
-        step.get("messages", [])
-    )
-
+def parse_agent_step(step: dict) -> list[str]:
     chunks = []
-    for msg in messages:
-        content = msg.content
 
-        if isinstance(msg, ToolMessage):
-            chunks.append(f"[Tool Response] {content}\n")
-        elif isinstance(msg, AIMessage):
-            # Normalize content to string
-            if isinstance(content, list):
-                content = "".join(str(part)
-                                  for part in content if isinstance(part, str))
+    for node_name, node_output in step.items():
+        if not isinstance(node_output, dict) or "messages" not in node_output:
+            continue
 
-            if content:
-                for line in content.splitlines():
-                    chunks.append(f"[AI] {line}\n")
-            elif msg.tool_calls:
-                for call in msg.tool_calls:
-                    chunks.append(
-                        f"[Tool Call] {call.get('name')} with input {call.get('input')}\n")
-        elif isinstance(msg, BaseMessage) and content:
-            if isinstance(content, list):
-                content = "".join(str(part)
-                                  for part in content if isinstance(part, str))
-            chunks.append(f"{content}\n")
+        for msg in node_output["messages"]:
+            chunks += _format_msg(msg, prefix=f"[{node_name.upper()}]")
+
+    return chunks
+
+
+def _format_msg(msg, prefix: str) -> list[str]:
+    chunks = []
+
+    content = msg.content
+    if isinstance(content, list):
+        content = "".join(
+            part["text"] for part in content if isinstance(part, dict) and "text" in part
+        )
+
+    if isinstance(msg, ToolMessage):
+        chunks.append(f"{prefix} [Tool Response] {content}\n")
+
+    elif isinstance(msg, AIMessage):
+        if msg.tool_calls:
+            for call in msg.tool_calls:
+                name = call.get("name")
+                input_str = json.dumps(call.get("input"), indent=2)
+                chunks.append(
+                    f"{prefix} [Tool Call] {name} with input {input_str}\n")
+
+        if content:
+            for line in content.splitlines():
+                chunks.append(f"{prefix} [AI] {line}\n")
+
+    elif isinstance(msg, BaseMessage) and content:
+        chunks.append(f"{prefix} {content}\n")
 
     return chunks
