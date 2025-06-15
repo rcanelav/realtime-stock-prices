@@ -15,7 +15,7 @@ tasks:
     desc: Run the application
     cmds:
     - echo "Running the application..."
-    - uvicorn src.main:app --port 8080 --reload | jq
+    - uvicorn src.main:app --port 8080 --reload | jq --unbuffered -R 'fromjson?'
 
   il1:
     desc: Invoke the local server
