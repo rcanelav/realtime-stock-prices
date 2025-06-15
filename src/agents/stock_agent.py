@@ -2,8 +2,11 @@ from dotenv import load_dotenv
 from langchain_core.messages import SystemMessage
 from langgraph.graph import END, START, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
+from structlog import get_logger
 
 from src.models.models import AgentState
+
+logger = get_logger()
 
 load_dotenv()
 
@@ -27,11 +30,16 @@ class StockAgent:
             self.model = self.model.bind_tools(tools)
 
     def _call_llm(self, state: AgentState):
+
+        logger.bind(state=state).debug("🛸 Preparing messages for LLM")
         messages = state['messages']
 
         if self.system_prompt:
             messages = [SystemMessage(content=self.system_prompt)] + messages
 
+        response = self.model.invoke(messages)
+        logger.bind(response=response).info("🛸 LLM response")
+
         return {
-            "messages": [self.model.invoke(messages)],
+            "messages": [response],
         }
