@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from structlog import get_logger
@@ -35,6 +34,5 @@ async def invoke(request: AgentRequest):
         raise HTTPException(status_code=400, detail=message)
 
     return StreamingResponse(
-        generate_agent_output(request.query),
-        media_type="text/event-stream"
+        generate_agent_output(request.query), media_type="text/event-stream"
     )
