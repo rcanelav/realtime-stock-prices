@@ -4,7 +4,8 @@
       "uv@latest",
       "go-task@latest",
       "terraform@latest",
-      "awscli2@latest"
+      "awscli2@latest",
+      "terraform-docs@latest"
     ],
     "shell": {
       "init_hook": [
