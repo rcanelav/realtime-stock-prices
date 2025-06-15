@@ -17,6 +17,7 @@ async def process_query(query: str) -> AsyncGenerator[str, None]:
         AsyncGenerator[str, None]: A generator that yields strings as the query is processed.
     """
     import asyncio
+
     for i in range(10):
         await asyncio.sleep(1)  # Simulate a delay
         yield f"Processing chunk {i + 1} for query: {query}"
@@ -34,4 +35,5 @@ async def main(request: Request):
         async for chunk in process_query(query):
             yield chunk + "\n"
             await sleep(0.1)
+
     return StreamingResponse(stream(), media_type="text/event-stream")
