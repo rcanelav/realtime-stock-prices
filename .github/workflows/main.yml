@@ -10,10 +10,15 @@ on:
     workflow_dispatch:
 
 jobs:
+    test-lint:
+        uses: ./.github/workflows/_base.yml
+        secrets: inherit
+
     # 1. Determines the environment based on the branch
     # 2. Checks if the branch is deployable,
     # 3. Sets the working directory for Terraform.
     set_environment:
+        needs: [test-lint]
         uses: ./.github/workflows/_set_env.yml
         secrets: inherit
         with:

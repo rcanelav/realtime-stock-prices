@@ -42,11 +42,12 @@ async def lifespan(app: FastAPI):
     logger.info("✅Application startup complete.")
     yield
 
+
 # App initialization
 app = FastAPI(
     title="Stock market agent API",
     description="An API for processing stock market related queries using AWS BEDROCK with streaming responses.",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # Routes
