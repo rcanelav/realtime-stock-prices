@@ -1,9 +1,13 @@
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
-from src.models.models import AgentRequest
-from src.utils.auth import get_api_key
-from src.services.agent_streaming import generate_agent_output
+from structlog import get_logger
 
+from src.models.models import AgentRequest
+from src.services.agent_streaming import generate_agent_output
+from src.utils.auth import get_api_key
+
+logger = get_logger()
 router = APIRouter()
 
 
@@ -24,8 +28,11 @@ async def invoke(request: AgentRequest):
     Raises:
         HTTPException: If the query is missing or invalid.
     """
+    logger.bind(query=request.query).debug("🛸 Processing stock-agent request")
     if not request.query:
-        raise HTTPException(status_code=400, detail="Query is required")
+        message = "Query missing in request body"
+        logger.error(f"❌ {message}")
+        raise HTTPException(status_code=400, detail=message)
 
     return StreamingResponse(
         generate_agent_output(request.query),
