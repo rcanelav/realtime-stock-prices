@@ -134,6 +134,14 @@ tasks:
     - echo "Applying Terraform changes with auto-approve..."
     - cd infrastructure/terraform && terraform apply -auto-approve
 
+  tfdocs:
+    desc: Generate Terraform documentation
+    cmds:
+    - echo "Generating Terraform documentation..."
+    - |
+      cd infrastructure/terraform/ && \
+      terraform-docs -c ./.terraform-docs.yml markdown table . --output-file README.md
+
   # ########################## Docker tasks ##################################
 
   db:
