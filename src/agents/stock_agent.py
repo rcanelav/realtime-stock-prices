@@ -29,6 +29,7 @@ class StockAgent:
         tools (list[Callable]): List of callable tool functions available to the agent.
         system_prompt (str): Optional system prompt injected before user messages.
     """
+
     def __init__(self, model, tools, system_prompt):
         self.system_prompt = system_prompt
         self.model = model
@@ -57,7 +58,7 @@ class StockAgent:
             dict: A dictionary with a single key `"messages"` containing the LLM response message.
         """
         logger.bind(state=state).debug("🛸 Preparing messages for LLM")
-        messages = state['messages']
+        messages = state["messages"]
 
         if self.system_prompt:
             messages = [SystemMessage(content=self.system_prompt)] + messages
