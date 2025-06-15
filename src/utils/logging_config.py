@@ -21,12 +21,12 @@ def setup_logging():
     ]
 
     # Configure the standard logging library to be a sink for structlog
-    logging.basicConfig(format="%(message)s",
-                        stream=sys.stdout, level=logging.INFO)
+    logging.basicConfig(format="%(message)s", stream=sys.stdout, level=logging.INFO)
 
     # Configure structlog itself
     structlog.configure(
-        processors=shared_processors + [
+        processors=shared_processors
+        + [
             # Prepare the log record for the standard library
             structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
         ],
