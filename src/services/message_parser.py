@@ -19,8 +19,7 @@ def parse_agent_step(step: dict, config: AgentDisplayConfig) -> list[str]:
             continue
 
         for msg in node_output["messages"]:
-            chunks += _format_msg(msg,
-                                  prefix=f"[{node_name.upper()}]", config=config)
+            chunks += _format_msg(msg, prefix=f"[{node_name.upper()}]", config=config)
 
     return chunks
 
@@ -31,7 +30,9 @@ def _format_msg(msg, prefix: str, config: AgentDisplayConfig) -> list[str]:
 
     if isinstance(content, list):
         content = "".join(
-            part["text"] for part in content if isinstance(part, dict) and "text" in part
+            part["text"]
+            for part in content
+            if isinstance(part, dict) and "text" in part
         )
 
     if isinstance(msg, ToolMessage) and config.show_tool_responses:
@@ -46,8 +47,7 @@ def _format_msg(msg, prefix: str, config: AgentDisplayConfig) -> list[str]:
             for call in msg.tool_calls:
                 name = call.get("name")
                 input_str = json.dumps(call.get("input"), indent=2)
-                chunks.append(
-                    f"{prefix} [Tool Call] {name} with input {input_str}\n")
+                chunks.append(f"{prefix} [Tool Call] {name} with input {input_str}\n")
 
     elif isinstance(msg, BaseMessage) and content and config.show_base_messages:
         chunks.append(f"{prefix} {content}\n")
