@@ -11,6 +11,17 @@ env:
 
 tasks:
   # ##################### General purpose tasks ################################
+  ce:
+    desc: Create environment variables file
+    cmds:
+    - echo "Creating environment variables file..."
+    - |
+      if [ -f .env ]; then
+        echo ".env file already exists"
+      else
+        cp template.env .env
+        echo ".env file created successfully"
+      fi
   r:
     desc: Run the application
     cmds:

@@ -15,7 +15,8 @@
       "scripts": {
         "bootstrap": [
           "uv python install",
-          "uv init"
+          "uv init",
+          "task ce"
         ],
         "test": [
           "echo \"Error: no test specified\" && exit 1"
