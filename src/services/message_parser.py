@@ -1,13 +1,21 @@
-from langchain_core.messages import AIMessage, BaseMessage, ToolMessage
 import json
+from dataclasses import asdict
+
+from langchain_core.messages import AIMessage, BaseMessage, ToolMessage
+from structlog import get_logger
+
 from src.models.models import AgentDisplayConfig
+
+logger = get_logger()
 
 
 def parse_agent_step(step: dict, config: AgentDisplayConfig) -> list[str]:
     chunks = []
 
+    logger.bind(step=step, config=asdict(config)).debug("⚡ Parsing agent step")
     for node_name, node_output in step.items():
         if not isinstance(node_output, dict) or "messages" not in node_output:
+            logger.warning("⚠️ Skipping node with unexpected output", node=node_name)
             continue
 
         for msg in node_output["messages"]:

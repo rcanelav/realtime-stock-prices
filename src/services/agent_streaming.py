@@ -4,6 +4,7 @@ from typing import Any, AsyncGenerator, Iterator
 
 from langchain_aws import ChatBedrockConverse
 from langchain_core.messages import HumanMessage
+from structlog import get_logger
 
 from src.agents.stock_agent import StockAgent
 from src.models.models import AgentDisplayConfig
@@ -12,6 +13,8 @@ from src.services.message_parser import parse_agent_step
 from src.tools.tools import (get_current_datetime,
                              retrieve_historical_stock_price,
                              retrieve_realtime_stock_price)
+
+logger = get_logger()
 
 
 def get_stock_agent_stream(query: str) -> Iterator[dict[str, Any] | Any]:
@@ -76,11 +79,12 @@ async def generate_agent_output(query: str) -> AsyncGenerator[str, None]:
     Yields:
         str: Formatted text output from each agent step, streamed incrementally.
     """
-
+    logger.bind(query=query).debug("🏁 Starting agent response stream")
     loop = asyncio.get_event_loop()
 
     def sync_generator():
         for step in get_stock_agent_stream(query):
+            logger.bind(step=step).debug("⚡Processing agent step")
             yield from parse_agent_step(step, AgentDisplayConfig().from_env())
 
     gen = sync_generator()
@@ -88,6 +92,8 @@ async def generate_agent_output(query: str) -> AsyncGenerator[str, None]:
     while True:
         chunk = await loop.run_in_executor(None, lambda: next(gen, None))
         if chunk is None:
+            logger.info("😎 Finished streaming agent response")
             break
+        logger.bind(chunk=chunk).debug("🚀 Streaming chunk")
         yield chunk
         await asyncio.sleep(0.01)
