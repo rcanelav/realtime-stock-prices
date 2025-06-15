@@ -12,6 +12,23 @@ load_dotenv()
 
 
 class StockAgent:
+    """
+    This agent is designed to:
+    - Accept user input as a sequence of messages
+    - Invoke an LLM (via Bedrock or other compatible model) with optional system prompt context
+    - Call tools when required (e.g., real-time stock retrieval)
+    - Stream intermediate reasoning steps and results
+
+    The agent is composed of a stateful LangGraph workflow with:
+    - An LLM node (`llm`) that handles message generation
+    - A tool node (`tools`) that executes tool calls (e.g., for data retrieval)
+    - Conditional transitions based on tool usage
+
+    Args:
+        model: The language model instance, compatible with LangChain/Bedrock interfaces.
+        tools (list[Callable]): List of callable tool functions available to the agent.
+        system_prompt (str): Optional system prompt injected before user messages.
+    """
     def __init__(self, model, tools, system_prompt):
         self.system_prompt = system_prompt
         self.model = model
@@ -30,7 +47,15 @@ class StockAgent:
             self.model = self.model.bind_tools(tools)
 
     def _call_llm(self, state: AgentState):
+        """
+        Invokes the LLM with the current message history, prepending a system prompt if provided.
 
+        Args:
+            state (AgentState): The current agent state containing the message history.
+
+        Returns:
+            dict: A dictionary with a single key `"messages"` containing the LLM response message.
+        """
         logger.bind(state=state).debug("🛸 Preparing messages for LLM")
         messages = state['messages']
 
