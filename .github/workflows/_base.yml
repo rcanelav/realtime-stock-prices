@@ -13,11 +13,12 @@ jobs:
       - name: Set up Python environment
         uses: actions/setup-python@v5.0.0
         with:
-          python-version: '3.10'
+          python-version: '3.13'
 
       - name: Install dependencies
         run: |
             pip install uv
+            uv pip install --no-cache --system -e .
 
       - name: Pylint
         run: |  # using --fail options to avoid workflow failing because lint
@@ -36,12 +37,13 @@ jobs:
       - name: Set up Python environment
         uses: actions/setup-python@v5.0.0
         with:
-          python-version: '3.10'
+          python-version: '3.13'
 
       - name: Install dependencies
         run: |
           pip install uv
           uv add pytest coverage
+          uv pip install --no-cache --system -e .
 
       - name: Run unit tests
         run: |
