@@ -1,19 +1,18 @@
 import os
 from contextlib import asynccontextmanager
 
-import structlog
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.security import APIKeyHeader
+from structlog import get_logger
 
-from src.routes import stock_agent
-from src.routes import dummy
+from src.routes import dummy, stock_agent
 from src.utils.logging_config import setup_logging
 
 API_KEY_NAME = "X-API-KEY"
 api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=True)
-logger = structlog.get_logger(__name__)
+logger = get_logger()
 
 
 @asynccontextmanager
