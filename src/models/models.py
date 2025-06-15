@@ -27,13 +27,16 @@ class AgentRequest(BaseModel):
             "query": "What is the current stock price of Tesla?"
         }
     """
+
     query: str
 
 
 class TickerInput(BaseModel):
     """Input model for any tool that requires a stock ticker."""
-    ticker: str = Field(...,
-                        description="The stock ticker symbol, e.g., 'AAPL' for Apple.")
+
+    ticker: str = Field(
+        ..., description="The stock ticker symbol, e.g., 'AAPL' for Apple."
+    )
 
 
 class EmptyInput(BaseModel):
@@ -68,6 +71,7 @@ class AgentState(TypedDict):
         This model is used as the state definition in StateGraph(...), and is essential for
         enabling message accumulation and loop-based workflows in LangGraph.
     """
+
     messages: Annotated[list[AnyMessage], operator.add]
 
 
@@ -94,6 +98,7 @@ class AgentDisplayConfig:
 
     Note: If you use `from_env()`, environment variables override the class defaults.
     """
+
     show_tool_calls: bool = True
     show_tool_responses: bool = True
     show_ai_messages: bool = True
