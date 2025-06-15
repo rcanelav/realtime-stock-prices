@@ -10,9 +10,11 @@ from src.agents.stock_agent import StockAgent
 from src.models.models import AgentDisplayConfig
 from src.prompts.stock_market_prompts import agent_prompts
 from src.services.message_parser import parse_agent_step
-from src.tools.tools import (get_current_datetime,
-                             retrieve_historical_stock_price,
-                             retrieve_realtime_stock_price)
+from src.tools.tools import (
+    get_current_datetime,
+    retrieve_historical_stock_price,
+    retrieve_realtime_stock_price,
+)
 
 logger = get_logger()
 
@@ -48,20 +50,18 @@ def get_stock_agent_stream(query: str) -> Iterator[dict[str, Any] | Any]:
     tools = [
         retrieve_realtime_stock_price,
         retrieve_historical_stock_price,
-        get_current_datetime]
+        get_current_datetime,
+    ]
 
     # LLM Configuration
     model = ChatBedrockConverse(
         model=os.getenv(
-            "AWS_BEDROCK_MODEL_ID", "anthropic.claude-3-haiku-20240307-v1:0")
+            "AWS_BEDROCK_MODEL_ID", "anthropic.claude-3-haiku-20240307-v1:0"
+        )
     ).bind_tools(tools)
 
     # Create the agent
-    agent = StockAgent(
-        model=model,
-        tools=tools,
-        system_prompt=agent_prompts["v1"]
-    )
+    agent = StockAgent(model=model, tools=tools, system_prompt=agent_prompts["v1"])
 
     return agent.graph_app.stream(initial_state)
 
