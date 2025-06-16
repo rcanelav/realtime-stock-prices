@@ -3,7 +3,7 @@
 Project to provide a stock market AI Agent that can answer questions about the stock market, using Bedrock, Langchain, Langgraph, and monitored with LangSmith.
 </p>
 
-<p>⚠️ If you just want to try the demo, check: <a href="demo"><strong>Demo</strong></a> after prerequisites.</p>
+<p>⚠️ If you just want to try the demo, check: <a href="./demo.ipynb"><strong>demo.ipynb</strong></a> after prerequisites.</p>
 <br>
 <hr>
 <h2 id="table-of-contents">📙<strong>Table of Contents</strong></h2>
