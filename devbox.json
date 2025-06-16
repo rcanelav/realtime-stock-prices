@@ -15,7 +15,7 @@
       "scripts": {
         "bootstrap": [
           "uv python install",
-          "uv init",
+          "uv sync",
           "task ce"
         ],
         "test": [
