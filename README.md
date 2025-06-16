@@ -125,8 +125,6 @@ cd realtime-stock-prices</code></pre>
     </li>
     <li>Install development environment:
         <pre><code>devbox shell</code></pre>
-        <pre><code>devbox install</code></pre>
-        <pre><code>devbox run bootstrap</code></pre>
     </li>
     <li>Fill the .env file with the required environment variables.
     </li>
