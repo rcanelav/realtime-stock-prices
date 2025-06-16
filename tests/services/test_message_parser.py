@@ -9,6 +9,7 @@ from src.services.message_parser import _format_msg, parse_agent_step
 class TestParseAgentStep:
 
     def test_parses_valid_step_with_ai_message(self):
+        prefix = "data:"
         step = {
             "llm": {
                 "messages": [
@@ -25,8 +26,8 @@ class TestParseAgentStep:
 
         result = parse_agent_step(step, config)
         assert result == [
-            "[LLM] [AI] Hello\n",
-            "[LLM] [AI] How are you?\n"
+            f"{prefix} [LLM] [AI] Hello\n",
+            f"{prefix} [LLM] [AI] How are you?\n"
         ]
 
     def test_skips_invalid_node_output(self):
@@ -38,6 +39,7 @@ class TestParseAgentStep:
         assert result == []
 
     def test_parses_multiple_nodes(self):
+        prefix = "data:"
         step = {
             "llm": {
                 "messages": [
@@ -58,12 +60,11 @@ class TestParseAgentStep:
         )
 
         result = parse_agent_step(step, config)
-        assert "[LLM] [AI] llm step\n" in result
-        assert "[TOOL_USE] [Tool Response] Tool result\n" in result
+        assert f"{prefix} [LLM] [AI] llm step\n" in result
+        assert f"{prefix} [TOOL_USE] [Tool Response] Tool result\n" in result
 
 
 class TestFormatMsg:
-
     def test_tool_message_with_response(self):
         msg = ToolMessage(content="Tool did something", tool_call_id="abc")
         config = AgentDisplayConfig(show_tool_responses=True)

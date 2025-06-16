@@ -19,7 +19,7 @@ def parse_agent_step(step: dict, config: AgentDisplayConfig) -> list[str]:
             continue
 
         for msg in node_output["messages"]:
-            chunks += _format_msg(msg, prefix=f"[{node_name.upper()}]", config=config)
+            chunks += _format_msg(msg, prefix=f"data: [{node_name.upper()}]", config=config)
 
     return chunks
 
